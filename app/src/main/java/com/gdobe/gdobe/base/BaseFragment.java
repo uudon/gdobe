@@ -16,6 +16,10 @@ import android.widget.RelativeLayout;
 import com.gdobe.gdobe.R;
 import com.gdobe.gdobe.util.PerfectClickListener;
 
+import rx.Subscription;
+import rx.subscriptions.CompositeSubscription;
+
+
 /**
  * Created by Administrator on 2017/2/20.
  */
@@ -32,6 +36,7 @@ public abstract class BaseFragment<SV extends ViewDataBinding> extends Fragment{
     private AnimationDrawable mAnimationDrawable;
     // 加载失败
     private LinearLayout mRefresh;
+    private CompositeSubscription mCompositeSubscription;
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -64,6 +69,10 @@ public abstract class BaseFragment<SV extends ViewDataBinding> extends Fragment{
 
     protected void loadData(){}
 
+    /**
+     * please add layout
+     * @return
+     */
     public abstract int setContentView();
 
     protected <T extends View> T getView(int id){
@@ -94,7 +103,7 @@ public abstract class BaseFragment<SV extends ViewDataBinding> extends Fragment{
         bindingView.getRoot().setVisibility(View.GONE);
     }
 
-    protected abstract void onRefresh();
+    protected void onRefresh(){};
 
     protected void showLoading(){
         if(mLlProgressBar.getVisibility() != View.VISIBLE){
@@ -148,6 +157,27 @@ public abstract class BaseFragment<SV extends ViewDataBinding> extends Fragment{
         }
         if (bindingView.getRoot().getVisibility() != View.GONE) {
             bindingView.getRoot().setVisibility(View.GONE);
+        }
+    }
+
+    public void addSubscription(Subscription s) {
+        if (this.mCompositeSubscription == null) {
+            this.mCompositeSubscription = new CompositeSubscription();
+        }
+        this.mCompositeSubscription.add(s);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (this.mCompositeSubscription != null && mCompositeSubscription.hasSubscriptions()) {
+            this.mCompositeSubscription.unsubscribe();
+        }
+    }
+
+    public void removeSubscription() {
+        if (this.mCompositeSubscription != null && mCompositeSubscription.hasSubscriptions()) {
+            this.mCompositeSubscription.unsubscribe();
         }
     }
 }
